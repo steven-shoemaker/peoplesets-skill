@@ -29,29 +29,39 @@ If the user asks for **real** HR data, this skill does not apply.
 
 ## Setup
 
-Two environment variables drive the skill:
+The hosted base URL is **`https://peoplesets.com`**. Use that literal
+string in every curl. Do not template `$PEOPLESETS_URL` into commands —
+when unset it produces `https:///generate-company` and the call fails.
+Only use the env var if the user explicitly set one for a self-hosted
+instance.
 
-| Var                  | Default                  | Meaning                                  |
-| -------------------- | ------------------------ | ---------------------------------------- |
-| `PEOPLESETS_URL`     | `https://peoplesets.com` | Base URL of the hosted API.              |
-| `PEOPLESETS_API_KEY` | _(unset)_                | Bearer token. Required for hosted use.   |
+The API key comes from `$PEOPLESETS_API_KEY`. Check it first:
 
-The skill assumes both env vars are present. If `PEOPLESETS_API_KEY` is
-unset, do not retry silently — tell the user to set it.
+```bash
+if [ -z "$PEOPLESETS_API_KEY" ]; then
+  echo "PEOPLESETS_API_KEY not set"
+fi
+```
 
-All HTTP calls go through your standard tool (`Bash` with `curl`, or
-direct HTTP if your runtime supports it). Always send
+If unset, stop and tell the user verbatim:
+
+> No API key found. Grab a free one at https://peoplesets.com/#get-key
+> (30 seconds, no card). Then:
+> `export PEOPLESETS_API_KEY=psk_…`
+> and ask me again.
+
+Never retry without a key. Every call sends
 `Authorization: Bearer $PEOPLESETS_API_KEY`.
 
 ## Endpoint catalog
 
 ```
-GET  $PEOPLESETS_URL/industry-packs                    → list curated packs
-GET  $PEOPLESETS_URL/scenarios                         → list special events
-POST $PEOPLESETS_URL/generate-company                  → start a sim job
-POST $PEOPLESETS_URL/apply-scenario                    → pack + 1 scenario
-GET  $PEOPLESETS_URL/jobs/{job_id}                     → status + meta
-GET  $PEOPLESETS_URL/jobs/{job_id}/artifacts.zip       → 4 parquets + reports
+GET  https://peoplesets.com/industry-packs                    → list curated packs
+GET  https://peoplesets.com/scenarios                         → list special events
+POST https://peoplesets.com/generate-company                  → start a sim job
+POST https://peoplesets.com/apply-scenario                    → pack + 1 scenario
+GET  https://peoplesets.com/jobs/{job_id}                     → status + meta
+GET  https://peoplesets.com/jobs/{job_id}/artifacts.zip       → 4 parquets + reports
 ```
 
 The richest one is `POST /generate-company`. Default to it for most briefs.
@@ -117,7 +127,7 @@ If the brief is vague on a dimension, leave it unset rather than guess.
 User: *"Make me a 1,200-person fintech dataset. They did a RIF last year — I want it to show in the data."*
 
 ```bash
-curl -X POST "$PEOPLESETS_URL/generate-company" \
+curl -X POST "https://peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -135,7 +145,7 @@ Then poll `/jobs/{job_id}` until `status: "done"`, then GET the zip.
 User: *"3,000-employee hospital system, realistic clinical/admin split, low turnover."*
 
 ```bash
-curl -X POST "$PEOPLESETS_URL/generate-company" \
+curl -X POST "https://peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -150,7 +160,7 @@ curl -X POST "$PEOPLESETS_URL/generate-company" \
 User: *"Series-A tech startup, ~80 employees, US-headquartered with most engineers in Bangalore."*
 
 ```bash
-curl -X POST "$PEOPLESETS_URL/generate-company" \
+curl -X POST "https://peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -165,8 +175,8 @@ curl -X POST "$PEOPLESETS_URL/generate-company" \
 
 User: *"What kinds of fake HR datasets can you build?"*
 
-1. `GET $PEOPLESETS_URL/industry-packs` — show the user the names + titles.
-2. `GET $PEOPLESETS_URL/scenarios` — show the user the scenarios.
+1. `GET https://peoplesets.com/industry-packs` — show the user the names + titles.
+2. `GET https://peoplesets.com/scenarios` — show the user the scenarios.
 3. Wait for them to pick one before submitting a job.
 
 ### Example 5 — applying a single scenario to a pack
@@ -174,7 +184,7 @@ User: *"What kinds of fake HR datasets can you build?"*
 User: *"Take the retail_chain pack and apply the distressed scenario."*
 
 ```bash
-curl -X POST "$PEOPLESETS_URL/apply-scenario" \
+curl -X POST "https://peoplesets.com/apply-scenario" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -190,7 +200,7 @@ Jobs run asynchronously. Poll every 1–3 seconds:
 
 ```bash
 curl -s -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
-  "$PEOPLESETS_URL/jobs/$JOB_ID"
+  "https://peoplesets.com/jobs/$JOB_ID"
 ```
 
 Statuses: `pending` → `running` → `done` (or `error`). A typical 500-person
@@ -202,7 +212,7 @@ at 120 s and report the failure to the user.
 ```bash
 curl -L -o "peoplesets-$JOB_ID.zip" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
-  "$PEOPLESETS_URL/jobs/$JOB_ID/artifacts.zip"
+  "https://peoplesets.com/jobs/$JOB_ID/artifacts.zip"
 ```
 
 The zip contains:
