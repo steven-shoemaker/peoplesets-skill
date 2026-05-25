@@ -1,6 +1,6 @@
 ---
 name: peoplesets
-description: Generate sales-demo-grade synthetic HR datasets via the peoplesets API. Use when the user asks for fake HR data, synthetic employees, a demo dataset for people analytics, a workforce dataset for testing, a Workday/BambooHR-shaped sample, an org-chart sandbox, or wants to back a people-analytics demo with realistic-but-fake employees, terminations, promotions, and comp data. Drives the hosted peoplesets service (default `https://peoplesets.com`) — translates natural-language briefs into endpoint calls, polls the job, downloads the four parquets, and summarizes shape for the user.
+description: Generate sales-demo-grade synthetic HR datasets via the peoplesets API. Use when the user asks for fake HR data, synthetic employees, a demo dataset for people analytics, a workforce dataset for testing, a Workday/BambooHR-shaped sample, an org-chart sandbox, or wants to back a people-analytics demo with realistic-but-fake employees, terminations, promotions, and comp data. Drives the hosted peoplesets service (default `https://www.peoplesets.com`) — translates natural-language briefs into endpoint calls, polls the job, downloads the four parquets, and summarizes shape for the user.
 version: 0.1.0
 ---
 
@@ -29,7 +29,7 @@ If the user asks for **real** HR data, this skill does not apply.
 
 ## Setup
 
-The hosted base URL is **`https://peoplesets.com`**. Use that literal
+The hosted base URL is **`https://www.peoplesets.com`**. Use that literal
 string in every curl. Do not template `$PEOPLESETS_URL` into commands —
 when unset it produces `https:///generate-company` and the call fails.
 Only use the env var if the user explicitly set one for a self-hosted
@@ -45,7 +45,7 @@ fi
 
 If unset, stop and tell the user verbatim:
 
-> No API key found. Grab a free one at https://peoplesets.com/#get-key
+> No API key found. Grab a free one at https://www.peoplesets.com/#get-key
 > (30 seconds, no card). Then:
 > `export PEOPLESETS_API_KEY=psk_…`
 > and ask me again.
@@ -56,12 +56,12 @@ Never retry without a key. Every call sends
 ## Endpoint catalog
 
 ```
-GET  https://peoplesets.com/industry-packs                    → list curated packs
-GET  https://peoplesets.com/scenarios                         → list special events
-POST https://peoplesets.com/generate-company                  → start a sim job
-POST https://peoplesets.com/apply-scenario                    → pack + 1 scenario
-GET  https://peoplesets.com/jobs/{job_id}                     → status + meta
-GET  https://peoplesets.com/jobs/{job_id}/artifacts.zip       → 4 parquets + reports
+GET  https://www.peoplesets.com/industry-packs                    → list curated packs
+GET  https://www.peoplesets.com/scenarios                         → list special events
+POST https://www.peoplesets.com/generate-company                  → start a sim job
+POST https://www.peoplesets.com/apply-scenario                    → pack + 1 scenario
+GET  https://www.peoplesets.com/jobs/{job_id}                     → status + meta
+GET  https://www.peoplesets.com/jobs/{job_id}/artifacts.zip       → 4 parquets + reports
 ```
 
 The richest one is `POST /generate-company`. Default to it for most briefs.
@@ -127,7 +127,7 @@ If the brief is vague on a dimension, leave it unset rather than guess.
 User: *"Make me a 1,200-person fintech dataset. They did a RIF last year — I want it to show in the data."*
 
 ```bash
-curl -X POST "https://peoplesets.com/generate-company" \
+curl -X POST "https://www.peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -145,7 +145,7 @@ Then poll `/jobs/{job_id}` until `status: "done"`, then GET the zip.
 User: *"3,000-employee hospital system, realistic clinical/admin split, low turnover."*
 
 ```bash
-curl -X POST "https://peoplesets.com/generate-company" \
+curl -X POST "https://www.peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -160,7 +160,7 @@ curl -X POST "https://peoplesets.com/generate-company" \
 User: *"Series-A tech startup, ~80 employees, US-headquartered with most engineers in Bangalore."*
 
 ```bash
-curl -X POST "https://peoplesets.com/generate-company" \
+curl -X POST "https://www.peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -175,8 +175,8 @@ curl -X POST "https://peoplesets.com/generate-company" \
 
 User: *"What kinds of fake HR datasets can you build?"*
 
-1. `GET https://peoplesets.com/industry-packs` — show the user the names + titles.
-2. `GET https://peoplesets.com/scenarios` — show the user the scenarios.
+1. `GET https://www.peoplesets.com/industry-packs` — show the user the names + titles.
+2. `GET https://www.peoplesets.com/scenarios` — show the user the scenarios.
 3. Wait for them to pick one before submitting a job.
 
 ### Example 5 — applying a single scenario to a pack
@@ -184,7 +184,7 @@ User: *"What kinds of fake HR datasets can you build?"*
 User: *"Take the retail_chain pack and apply the distressed scenario."*
 
 ```bash
-curl -X POST "https://peoplesets.com/apply-scenario" \
+curl -X POST "https://www.peoplesets.com/apply-scenario" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -200,7 +200,7 @@ Jobs run asynchronously. Poll every 1–3 seconds:
 
 ```bash
 curl -s -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
-  "https://peoplesets.com/jobs/$JOB_ID"
+  "https://www.peoplesets.com/jobs/$JOB_ID"
 ```
 
 Statuses: `pending` → `running` → `done` (or `error`). A typical 500-person
@@ -212,7 +212,7 @@ at 120 s and report the failure to the user.
 ```bash
 curl -L -o "peoplesets-$JOB_ID.zip" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
-  "https://peoplesets.com/jobs/$JOB_ID/artifacts.zip"
+  "https://www.peoplesets.com/jobs/$JOB_ID/artifacts.zip"
 ```
 
 The zip contains:
