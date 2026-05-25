@@ -74,16 +74,25 @@ Build a `POST /generate-company` body from these slots, in priority order:
    installed pack (`tech_startup`, `retail_chain`, `healthcare_system`,
    plus whatever `GET /industry-packs` returns), use that as the base.
 
-2. **`size`** — integer headcount. Map fuzzy descriptions:
+2. **`size`** — **starting** headcount the engine spins up before the
+   sim window opens. NOT the final active headcount. Growth hiring over
+   the sim window typically pushes the final active count to 2–3× this
+   for a 3-year run. When the user says "make me a 1,200-person
+   company," they usually mean *final active* — pick `size` accordingly:
 
-   | Phrase                                   | size        |
-   | ---------------------------------------- | ----------- |
-   | "tiny startup", "garage"                 | 25          |
-   | "early startup", "Series A", "~50"       | 50–80       |
-   | "Series B", "growth-stage", "mid-200s"   | 200–300     |
-   | "Series C", "scale-up", "low thousands"  | 800–1,500   |
-   | "mid-market", "~2k"                      | 2,000       |
-   | "enterprise", "10k+"                     | 10,000      |
+   | User says                                | starting `size` | with `simulation_years` |
+   | ---------------------------------------- | --------------- | ----------------------- |
+   | "tiny startup, ~25"                      | 25              | 1.0                     |
+   | "early startup, ~50"                     | 50              | 1.0                     |
+   | "Series A ~80 today"                     | 50              | 2.0                     |
+   | "Series B, ~250"                         | 150             | 2.0                     |
+   | "~1,200-person company"                  | 500             | 3.0                     |
+   | "Series C, ~2k"                          | 1,000           | 3.0                     |
+   | "mid-market, ~5k"                        | 2,500           | 3.0                     |
+   | "enterprise, ~10k"                       | 5,000           | 3.0                     |
+
+   Shortcut: for a target final headcount `N` over 3 years, start at
+   `~N/2.5`. Or set `simulation_years=1.0` and use `size=N` directly.
 
 3. **`simulation_years`** — defaults to 3.0 if unspecified.
    Bump to 5.0 if the brief says "5-year history" / "since 2020" / similar.
@@ -126,12 +135,15 @@ If the brief is vague on a dimension, leave it unset rather than guess.
 
 User: *"Make me a 1,200-person fintech dataset. They did a RIF last year — I want it to show in the data."*
 
+`size=500` + `simulation_years=3.0` lands at ~1,200 active by sim end:
+
 ```bash
 curl -X POST "https://www.peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "size": 1200,
+    "size": 500,
+    "simulation_years": 3.0,
     "country_mix": {"USA": 0.85, "GBR": 0.10, "IRL": 0.05},
     "special_events": ["rif"],
     "seed": 42
@@ -144,13 +156,16 @@ Then poll `/jobs/{job_id}` until `status: "done"`, then GET the zip.
 
 User: *"3,000-employee hospital system, realistic clinical/admin split, low turnover."*
 
+`size=1200` + `simulation_years=3.0` lands near 3,000 active:
+
 ```bash
 curl -X POST "https://www.peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "industry_pack": "healthcare_system",
-    "size": 3000,
+    "size": 1200,
+    "simulation_years": 3.0,
     "seed": 42
   }'
 ```
@@ -159,13 +174,17 @@ curl -X POST "https://www.peoplesets.com/generate-company" \
 
 User: *"Series-A tech startup, ~80 employees, US-headquartered with most engineers in Bangalore."*
 
+A small org over a short window doesn't compound much — `size=50` +
+`simulation_years=1.5` lands near 80:
+
 ```bash
 curl -X POST "https://www.peoplesets.com/generate-company" \
   -H "Authorization: Bearer $PEOPLESETS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "industry_pack": "tech_startup",
-    "size": 80,
+    "size": 50,
+    "simulation_years": 1.5,
     "country_mix": {"USA": 0.40, "IND": 0.60},
     "seed": 42
   }'
