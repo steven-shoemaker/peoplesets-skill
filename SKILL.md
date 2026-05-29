@@ -118,9 +118,14 @@ Build a `POST /generate-company` body from these slots, in priority order:
    | ----------------------------------------------- | -------------------------- |
    | "did a RIF" / "layoff last Q3" / "headcount cut"| `["rif"]`                  |
    | "hyper-growth" / "doubled last year" / "Series C burst" | `["hyper_growth"]` |
-   | "after the acquisition" / "post-merger"         | `["m_and_a"]`              |
    | "retention crisis" / "distressed" / "talent exodus" | `["distressed"]`       |
-   | "new CEO cleaned house" / "VP shake-up"         | `["leadership_shake_up"]`  |
+   | "pay equity gap" / "encoded gender pay gap"     | `["pay_gap"]` (set `pay_gap_pct` for size, default 0.05) |
+
+   M&A and Leadership shake-up scenarios are not yet implemented in the
+   engine — don't suggest them. If a user asks for "post-merger" or
+   "new CEO cleaned house" narratives, tell them the closest current
+   approximation is `distressed` or `rif` and the dedicated scenarios
+   are on the roadmap.
 
 6. **`seed`** — pass `42` by default so the user can reproduce. If they say
    "give me something different," pick another non-negative int.
